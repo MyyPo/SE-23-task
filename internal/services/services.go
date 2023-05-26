@@ -12,7 +12,7 @@ import (
 )
 
 type ExchangeRateService interface {
-	GetExchangeRate() (*responses.GetRateResponse, error)
+	GetExchangeRate(request requests.GetRateRequest) (*responses.GetRateResponse, error)
 }
 
 type ExchangeRateServiceImpl struct{}
