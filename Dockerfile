@@ -8,15 +8,15 @@ RUN go mod tidy
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o myapp
+RUN CGO_ENABLED=0 GOOS=linux go build -o btcinform
 
 FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=build /app/myapp .
+COPY --from=build /app/btcinform .
 
 EXPOSE 8080
 
-CMD ["./myapp"]
+CMD ["./btcinform"]
 
