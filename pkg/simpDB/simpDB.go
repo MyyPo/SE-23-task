@@ -7,6 +7,11 @@ import (
 	"path/filepath"
 )
 
+type SimpDB interface {
+	CreateOne(newRecord string) error
+	GetAll() (*[]string, error)
+}
+
 type SimpDBProvider struct {
 	dbPath string
 }
@@ -21,7 +26,9 @@ func (p *SimpDBProvider) CreateOne(newRecord string) error {
 	// emails starting with "a" will be stored in file "a", starting with "b" in "b" etc.
 	partition, err := os.OpenFile(filePath, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0643)
 	if err != nil {
-		return fmt.Errorf("unexpected error: failed to open/create a db partition: %w", err)
+		return NewUnexpectedError(
+			fmt.Errorf("failed to open/create a db partition: %w", err),
+		)
 	}
 	defer partition.Close()
 
@@ -36,7 +43,9 @@ func (p *SimpDBProvider) CreateOne(newRecord string) error {
 
 	_, err = fmt.Fprintf(partition, "%s\n", newRecord)
 	if err != nil {
-		return fmt.Errorf("unexpected error: failed to write a new record to db partition: %w", err)
+		return NewUnexpectedError(
+			fmt.Errorf("failed to write a new record to db partition: %w", err),
+		)
 	}
 
 	return nil
@@ -57,7 +66,8 @@ func (p *SimpDBProvider) readPartitionFunc(
 ) func(string, os.FileInfo, error) error {
 	return func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return fmt.Errorf("unexpected error: failed to walk a db partition: %w", err)
+			return NewUnexpectedError(
+				fmt.Errorf("failed to walk a db partition: %w", err))
 		}
 
 		if info.IsDir() {
@@ -66,7 +76,8 @@ func (p *SimpDBProvider) readPartitionFunc(
 
 		partition, err := os.Open(path)
 		if err != nil {
-			return fmt.Errorf("unexpected error: failed to read a partition: %w", err)
+			return NewUnexpectedError(
+				fmt.Errorf("failed to read a partition: %w", err))
 		}
 		defer partition.Close()
 
@@ -77,7 +88,8 @@ func (p *SimpDBProvider) readPartitionFunc(
 		}
 
 		if err := scanner.Err(); err != nil {
-			return fmt.Errorf("unexpected error: scanner encountered error: %w", err)
+			return NewUnexpectedError(
+				fmt.Errorf("scanner encountered error: %w", err))
 		}
 
 		return nil

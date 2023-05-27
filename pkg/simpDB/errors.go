@@ -17,3 +17,15 @@ func (e DuplicateRecordError) Error() string {
 func (e DuplicateRecordError) GetRecord() string {
 	return e.record
 }
+
+type UnexpectedError struct {
+	error error
+}
+
+func NewUnexpectedError(err error) *UnexpectedError {
+	return &UnexpectedError{error: err}
+}
+
+func (e UnexpectedError) Error() string {
+	return fmt.Sprintf("unexpected db error: %v", e.error)
+}
