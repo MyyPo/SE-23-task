@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/myypo/btcinform/internal/dto/requests"
 	"github.com/myypo/btcinform/internal/dto/responses"
 	"github.com/myypo/btcinform/internal/services"
 )
@@ -27,7 +28,8 @@ func NewHandlerImpl(exchangeRateService services.ExchangeRateService) *HandlerIm
 
 func (h *HandlerImpl) HandleGetRate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		publicAPIResponse, err := h.ExchangeRateService.GetExchangeRate()
+		request := requests.GetRateRequest{}
+		publicAPIResponse, err := h.ExchangeRateService.GetExchangeRate(request)
 		if err != nil {
 			sendResponse(ctx, http.StatusInternalServerError, nil, err)
 			return
