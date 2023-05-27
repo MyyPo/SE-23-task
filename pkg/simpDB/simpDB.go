@@ -30,7 +30,7 @@ func (p *SimpDBProvider) CreateOne(newRecord string) error {
 	for scanner.Scan() {
 		record := scanner.Text()
 		if record == newRecord {
-			return fmt.Errorf("db already contains record: %s", newRecord)
+			return NewDuplicateRecordError(newRecord)
 		}
 	}
 
