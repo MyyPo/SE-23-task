@@ -1,12 +1,12 @@
 package repositories
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/myypo/btcinform/internal/dto"
+	"github.com/myypo/btcinform/internal/utils"
 	simpdb "github.com/myypo/btcinform/pkg/simpDB"
 )
 
@@ -24,7 +24,7 @@ func TestSubscriptionRepositoryImpl_CreateSubscription(t *testing.T) {
 			name: "create valid subscription",
 			r: NewSubscriptionRepositoryImpl(
 				&simpDBMock{
-					CreateOneFunc: func() error {
+					createOneFunc: func() error {
 						return nil
 					},
 				},
@@ -38,7 +38,7 @@ func TestSubscriptionRepositoryImpl_CreateSubscription(t *testing.T) {
 			name: "try to create invalid subscription (for the same contact)",
 			r: NewSubscriptionRepositoryImpl(
 				&simpDBMock{
-					CreateOneFunc: func() error {
+					createOneFunc: func() error {
 						return simpdb.NewDuplicateRecordError(testSubContact)
 					},
 				},
@@ -52,7 +52,7 @@ func TestSubscriptionRepositoryImpl_CreateSubscription(t *testing.T) {
 			name: "handle unexpected error from db",
 			r: NewSubscriptionRepositoryImpl(
 				&simpDBMock{
-					CreateOneFunc: func() error {
+					createOneFunc: func() error {
 						return fmt.Errorf("unexpected error from db")
 					},
 				},
@@ -65,7 +65,7 @@ func TestSubscriptionRepositoryImpl_CreateSubscription(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.r.CreateSubscription(tt.args.subscription); !testAreErrorsEqual(
+			if err := tt.r.CreateSubscription(tt.args.subscription); !utils.TestAreErrorsEqual(
 				err,
 				tt.wantErr,
 			) {
@@ -89,7 +89,7 @@ func TestSubscriptionRepositoryImpl_GetAllSubscriptions(t *testing.T) {
 		{
 			name: "get subscriptions without errors",
 			r: NewSubscriptionRepositoryImpl(&simpDBMock{
-				GetAllFunc: func() (*[]string, error) {
+				getAllFunc: func() (*[]string, error) {
 					return &[]string{testSubContact, "something@outlook.com", "test@test.com"}, nil
 				},
 			}),
@@ -101,7 +101,7 @@ func TestSubscriptionRepositoryImpl_GetAllSubscriptions(t *testing.T) {
 		{
 			name: "handle unexpected error from db",
 			r: NewSubscriptionRepositoryImpl(&simpDBMock{
-				GetAllFunc: func() (*[]string, error) {
+				getAllFunc: func() (*[]string, error) {
 					return nil, simpdb.NewUnexpectedError(fmt.Errorf("something went wrong"))
 				},
 			}),
@@ -112,7 +112,7 @@ func TestSubscriptionRepositoryImpl_GetAllSubscriptions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.r.GetAllSubscriptions()
-			if !testAreErrorsEqual(err, tt.wantErr) {
+			if !utils.TestAreErrorsEqual(err, tt.wantErr) {
 				t.Errorf(
 					"SubscriptionRepositoryImpl.GetAllSubscriptions() error = %v, wantErr %v",
 					err,
@@ -134,24 +134,14 @@ func TestSubscriptionRepositoryImpl_GetAllSubscriptions(t *testing.T) {
 var testSubContact string = "email@gmail.com"
 
 type simpDBMock struct {
-	CreateOneFunc func() error
-	GetAllFunc    func() (*[]string, error)
+	createOneFunc func() error
+	getAllFunc    func() (*[]string, error)
 }
 
 func (m *simpDBMock) CreateOne(newRecord string) error {
-	return m.CreateOneFunc()
+	return m.createOneFunc()
 }
 
 func (m *simpDBMock) GetAll() (*[]string, error) {
-	return m.GetAllFunc()
-}
-
-func testAreErrorsEqual(err error, targetErr error) bool {
-	if err == nil && targetErr == nil {
-		return true
-	}
-	if targetErr != nil {
-		return errors.Is(err, targetErr)
-	}
-	return false
+	return m.getAllFunc()
 }
