@@ -66,8 +66,8 @@ func TestSubscriptionRepositoryImpl_CreateSubscription(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := tt.r.CreateSubscription(tt.args.subscription); !testAreErrorsEqual(
-				tt.wantErr,
 				err,
+				tt.wantErr,
 			) {
 				t.Errorf(
 					"SubscriptionRepositoryImpl.CreateSubscription() error = %v, wantErr %v",
@@ -150,11 +150,8 @@ func testAreErrorsEqual(err error, targetErr error) bool {
 	if err == nil && targetErr == nil {
 		return true
 	}
-	if errors.Is(err, targetErr) {
-		return true
+	if targetErr != nil {
+		return errors.Is(err, targetErr)
 	}
-	// if errors.As(err, &UnexpectedRepoError{}) {
-	// 	return true
-	// }
 	return false
 }

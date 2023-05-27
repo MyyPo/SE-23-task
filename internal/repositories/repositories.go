@@ -27,7 +27,7 @@ func (r *SubscriptionRepositoryImpl) CreateSubscription(
 ) error {
 	err := r.dbEngine.CreateOne(*subscription.GetContact())
 	if err != nil {
-		if !errors.As(err, &simpdb.DuplicateRecordError{}) {
+		if !errors.Is(err, simpdb.DuplicateRecordError{}) {
 			return NewUnexpectedRepoError(err)
 		}
 
