@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"log"
 	"net/http"
 	"net/smtp"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/myypo/btcinform/internal/dto/requests"
 	"github.com/myypo/btcinform/internal/dto/responses"
 	"github.com/myypo/btcinform/internal/repositories"
+	"github.com/myypo/btcinform/internal/utils"
 )
 
 type ExchangeRateService interface {
@@ -54,8 +56,10 @@ func (s *ExchangeRateServiceImpl) GetExchangeRate(
 		return nil, err
 	}
 
+	rate := utils.FormatNumberWithCommas(publicAPIResponse.BTC.UAH)
+
 	return &responses.GetRateResponse{
-		Rate: publicAPIResponse.BTC.UAH,
+		Rate: rate,
 	}, nil
 }
 
@@ -66,8 +70,10 @@ func (s *ExchangeRateServiceImpl) Subscribe(
 	err := s.repo.CreateSubscription(subscription)
 	if err != nil {
 		if !errors.Is(err, repositories.AlreadySubscribedError{}) {
+			log.Println("repository Subscribe InternalError: ", err)
 			return nil, NewInternalError()
 		}
+		log.Println("repository Subscribe DuplicateError for: ", subscription.GetContact())
 		return nil, NewDuplicateError(request.Email)
 	}
 	return responses.NewSubscribeResponse(constants.StatusSuccess), nil
@@ -78,22 +84,27 @@ func (s *ExchangeRateServiceImpl) SendEmails(
 ) (*responses.SendEmailsResponse, error) {
 	subscribers, err := s.repo.GetAllSubscriptions()
 	if err != nil {
+		log.Println("repository GetAllSubscriptions InternalError: ", err)
 		return nil, NewInternalError()
 	}
+	log.Println("fetched contacts: ", *subscribers.Contacts)
 
 	exchangeRate, err := s.callExchangeRateAPI()
 	if err != nil {
 		return nil, err
 	}
+	formattedExchangeRate := utils.FormatNumberWithCommas(exchangeRate.BTC.UAH)
 
 	err = smtp.SendMail(
 		fmt.Sprintf("%s:%s", *s.config.GetSMTPHost(), *s.config.GetSMTPPort()),
 		s.smtpAuth,
 		*s.config.GetEmailUsername(),
 		*subscribers.Contacts,
-		dto.NewEmailMessage(exchangeRate.BTC.UAH).GetMessage(),
+		dto.NewEmailMessage(&formattedExchangeRate, subscribers.Contacts).GetMessage(),
 	)
+
 	if err != nil {
+		log.Println("service SendEmails InternalError when sending: ", err)
 		return nil, NewInternalError()
 	}
 
@@ -103,18 +114,21 @@ func (s *ExchangeRateServiceImpl) SendEmails(
 func (s *ExchangeRateServiceImpl) callExchangeRateAPI() (*dto.PublicAPIRateResponse, error) {
 	publicAPIResponse, err := http.Get(constants.ExchangeRateURL)
 	if err != nil {
+		log.Println("service callExchangeRateAPI InternalError when getting rate: ", err)
 		return nil, NewInternalError()
 	}
 	defer publicAPIResponse.Body.Close()
 
-	body, err := ioutil.ReadAll(publicAPIResponse.Body)
+	body, err := io.ReadAll(publicAPIResponse.Body)
 	if err != nil {
+		log.Println("service callExchangeRateAPI InternalError when reading body: ", err)
 		return nil, NewInternalError()
 	}
 
 	var publicAPIData dto.PublicAPIRateResponse
 	err = json.Unmarshal(body, &publicAPIData)
 	if err != nil {
+		log.Println("service callExchangeRateAPI InternalError when Unmarshalling: ", err)
 		return nil, NewInternalError()
 	}
 

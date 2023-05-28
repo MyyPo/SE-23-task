@@ -1,4 +1,4 @@
-package rest
+package main
 
 import (
 	"github.com/myypo/btcinform/internal/router"

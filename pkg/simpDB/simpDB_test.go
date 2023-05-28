@@ -2,7 +2,6 @@ package simpdb
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -85,7 +84,7 @@ const (
 )
 
 func cleanupDb() {
-	fileInfos, _ := ioutil.ReadDir(dbPath)
+	fileInfos, _ := os.ReadDir(dbPath)
 
 	for _, fileInfo := range fileInfos {
 		filePath := filepath.Join(dbPath, fileInfo.Name())

@@ -15,6 +15,7 @@ FROM alpine:latest
 WORKDIR /
 
 COPY --from=build app/main /main
+COPY --from=build app/pkg/simpDB/db simpDB/db
 
 CMD ["./main"]
 

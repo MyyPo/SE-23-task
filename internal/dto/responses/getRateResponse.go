@@ -1,10 +1,10 @@
 package responses
 
 type GetRateResponse struct {
-	Rate int `json:"rate"`
+	Rate string `json:"rate"`
 }
 
-func NewGetRateResponse(rate int) *GetRateResponse {
+func NewGetRateResponse(rate string) *GetRateResponse {
 	return &GetRateResponse{
 		Rate: rate,
 	}

@@ -42,10 +42,10 @@ func TestExchangeRateServiceImpl_GetExchangeRate(t *testing.T) {
 				)
 				return
 			}
-			if got.Rate == 0 {
+			if got.Rate == "" {
 				t.Errorf("ExchangeRateServiceImpl.GetExchangeRate() = didn't return rate")
 			}
-			t.Logf("ExchangeRateServiceImpl.GetExchangeRate() returned %d", got.Rate)
+			t.Logf("ExchangeRateServiceImpl.GetExchangeRate() returned %s", got.Rate)
 		})
 	}
 }
@@ -148,4 +148,9 @@ func (c *testConfig) GetEmailUsername() *string {
 func (c *testConfig) GetEmailPassword() *string {
 	password := "password"
 	return &password
+}
+
+func (c *testConfig) GetAppPort() *string {
+	appPort := "appPort"
+	return &appPort
 }
