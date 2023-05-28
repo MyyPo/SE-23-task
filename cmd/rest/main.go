@@ -1,7 +1,9 @@
 package rest
 
-import "fmt"
+import (
+	"github.com/myypo/btcinform/internal/router"
+)
 
 func main() {
-	fmt.Println("hello, world!")
+	router.NewRouterImpl().Serve()
 }

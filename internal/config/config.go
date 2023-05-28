@@ -13,6 +13,7 @@ type Config interface {
 	GetSMTPPort() *string
 	GetEmailUsername() *string
 	GetEmailPassword() *string
+	GetAppPort() *string
 }
 
 type ConfigImpl struct {
@@ -21,6 +22,7 @@ type ConfigImpl struct {
 	SMTPPort      *string
 	EmailUsername *string
 	EmailPassword *string
+	AppPort       *string
 }
 
 func NewConfigImpl() (*ConfigImpl, error) {
@@ -44,12 +46,17 @@ func NewConfigImpl() (*ConfigImpl, error) {
 	if err != nil {
 		return nil, err
 	}
+	appPort, err := getEnvValue(constants.AppPortEnvKey)
+	if err != nil {
+		return nil, err
+	}
 	return &ConfigImpl{
 		DBPath:        dbPath,
 		SMTPHost:      smtpHost,
 		SMTPPort:      smtpPort,
 		EmailUsername: emailUsername,
 		EmailPassword: emailPassword,
+		AppPort:       appPort,
 	}, nil
 }
 
@@ -79,4 +86,8 @@ func (c *ConfigImpl) GetEmailUsername() *string {
 
 func (c *ConfigImpl) GetEmailPassword() *string {
 	return c.EmailPassword
+}
+
+func (c *ConfigImpl) GetAppPort() *string {
+	return c.AppPort
 }

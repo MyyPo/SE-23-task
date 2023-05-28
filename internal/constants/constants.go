@@ -11,4 +11,5 @@ const (
 	SMTPPortEnvKey      = "SMTP_PORT"
 	EmailUsernameEnvKey = "EMAIL_USERNAME"
 	EmailPasswordEnvKey = "EMAIL_PASSWORD"
+	AppPortEnvKey       = "APP_PORT"
 )

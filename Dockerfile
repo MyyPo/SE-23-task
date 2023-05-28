@@ -1,4 +1,4 @@
-FROM 1.20.4-alpine3.17 AS build
+FROM golang:1.20.4-alpine3.18 AS build
 
 WORKDIR /app
 
@@ -8,15 +8,13 @@ RUN go mod tidy
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o btcinform
+RUN go build -o main cmd/rest/main.go
 
 FROM alpine:latest
 
-WORKDIR /app
+WORKDIR /
 
-COPY --from=build /app/btcinform .
+COPY --from=build app/main /main
 
-EXPOSE 8080
-
-CMD ["./btcinform"]
+CMD ["./main"]
 

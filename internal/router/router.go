@@ -35,5 +35,5 @@ func (r *RouterImpl) Serve() {
 	router.POST("/subscribe", handler.HandleSubscribe())
 	router.POST("/sendEmails", handler.HandleSendEmails())
 
-	router.Run(":8080")
+	router.Run(":" + *config.GetAppPort())
 }
