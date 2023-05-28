@@ -6,5 +6,9 @@ const (
 )
 
 const (
-	DBPathEnvKey = "/pkg/simpDB/db/"
+	DBPathEnvKey        = "DB_PATH"
+	SMTPHostEnvKey      = "SMTP_HOST"
+	SMTPPortEnvKey      = "SMTP_PORT"
+	EmailUsernameEnvKey = "EMAIL_USERNAME"
+	EmailPasswordEnvKey = "EMAIL_PASSWORD"
 )

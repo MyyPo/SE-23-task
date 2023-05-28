@@ -26,7 +26,7 @@ func TestExchangeRateServiceImpl_GetExchangeRate(t *testing.T) {
 	}{
 		{
 			"Valid rate request",
-			NewExchangeRateServiceImpl(&subscriptionRepositoryMock{}),
+			NewExchangeRateServiceImpl(&testConfig{}, &subscriptionRepositoryMock{}),
 			args{request: requests.GetRateRequest{}},
 			false,
 		},
@@ -59,7 +59,7 @@ func TestExchangeRateServiceImpl_Subscribe(t *testing.T) {
 	}{
 		{
 			name: "successful subscription",
-			s: NewExchangeRateServiceImpl(&subscriptionRepositoryMock{
+			s: NewExchangeRateServiceImpl(&testConfig{}, &subscriptionRepositoryMock{
 				createSubscriptionFunc: func() error {
 					return nil
 				},
@@ -69,7 +69,7 @@ func TestExchangeRateServiceImpl_Subscribe(t *testing.T) {
 		},
 		{
 			name: "attempt to subscribe already subscribed email",
-			s: NewExchangeRateServiceImpl(&subscriptionRepositoryMock{
+			s: NewExchangeRateServiceImpl(&testConfig{}, &subscriptionRepositoryMock{
 				createSubscriptionFunc: func() error {
 					return repositories.NewAlreadySubscribedError(testEmail)
 				},
@@ -79,7 +79,7 @@ func TestExchangeRateServiceImpl_Subscribe(t *testing.T) {
 		},
 		{
 			name: "encounter unexpected error",
-			s: NewExchangeRateServiceImpl(&subscriptionRepositoryMock{
+			s: NewExchangeRateServiceImpl(&testConfig{}, &subscriptionRepositoryMock{
 				createSubscriptionFunc: func() error {
 					return repositories.NewUnexpectedRepoError(fmt.Errorf("disaster"))
 				},
@@ -121,4 +121,31 @@ func (r *subscriptionRepositoryMock) CreateSubscription(dto.Subscription) error 
 
 func (r *subscriptionRepositoryMock) GetAllSubscriptions() (*dto.Subscriptions, error) {
 	return r.getAllSubscriptionsFunc()
+}
+
+type testConfig struct{}
+
+func (c *testConfig) GetDBPath() *string {
+	dbPath := "dbPath"
+	return &dbPath
+}
+
+func (c *testConfig) GetSMTPHost() *string {
+	host := "host"
+	return &host
+}
+
+func (c *testConfig) GetSMTPPort() *string {
+	port := "port"
+	return &port
+}
+
+func (c *testConfig) GetEmailUsername() *string {
+	username := "username"
+	return &username
+}
+
+func (c *testConfig) GetEmailPassword() *string {
+	password := "password"
+	return &password
 }

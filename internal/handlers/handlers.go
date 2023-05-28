@@ -28,7 +28,12 @@ func NewHandlerImpl(exchangeRateService services.ExchangeRateService) *HandlerIm
 
 func (h *HandlerImpl) HandleGetRate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		request := requests.GetRateRequest{}
+		var request requests.GetRateRequest
+		if err := ctx.ShouldBindJSON(&request); err != nil {
+			sendResponse(ctx, http.StatusBadRequest, nil, err)
+			return
+		}
+
 		publicAPIResponse, err := h.ExchangeRateService.GetExchangeRate(request)
 		if err != nil {
 			sendResponse(ctx, http.StatusInternalServerError, nil, err)
@@ -42,11 +47,46 @@ func (h *HandlerImpl) HandleGetRate() gin.HandlerFunc {
 }
 
 func (h *HandlerImpl) HandleSubscribe() gin.HandlerFunc {
-	return func(ctx *gin.Context) {}
+	return func(ctx *gin.Context) {
+		var request requests.SubscribeRequest
+		if err := ctx.ShouldBindJSON(&request); err != nil {
+			sendResponse(ctx, http.StatusBadRequest, nil, err)
+			return
+		}
+
+		resp, err := h.ExchangeRateService.Subscribe(request)
+		if err != nil {
+			switch err {
+			case services.DuplicateError{}:
+				sendResponse(ctx, http.StatusConflict, nil, err)
+				return
+			default:
+				sendResponse(ctx, http.StatusInternalServerError, nil, err)
+				return
+			}
+		}
+		sendResponse(ctx, http.StatusOK, resp, nil)
+	}
 }
 
 func (h *HandlerImpl) HandleSendEmails() gin.HandlerFunc {
-	return func(ctx *gin.Context) {}
+	return func(ctx *gin.Context) {
+		var request requests.SendEmailsRequest
+		if err := ctx.ShouldBindJSON(&request); err != nil {
+			sendResponse(ctx, http.StatusBadRequest, nil, err)
+			return
+		}
+
+		resp, err := h.ExchangeRateService.SendEmails(request)
+		if err != nil {
+			switch err {
+			default:
+				sendResponse(ctx, http.StatusInternalServerError, nil, err)
+				return
+			}
+		}
+		sendResponse(ctx, http.StatusOK, resp, nil)
+	}
 }
 
 func sendResponse(ctx *gin.Context, statusCode int, data any, err error) {

@@ -3,9 +3,12 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/smtp"
 
+	"github.com/myypo/btcinform/internal/config"
 	"github.com/myypo/btcinform/internal/constants"
 	"github.com/myypo/btcinform/internal/dto"
 	"github.com/myypo/btcinform/internal/dto/requests"
@@ -20,37 +23,39 @@ type ExchangeRateService interface {
 }
 
 type ExchangeRateServiceImpl struct {
-	repo repositories.SubscriptionRepository
+	config   config.Config
+	repo     repositories.SubscriptionRepository
+	smtpAuth smtp.Auth
 }
 
-func NewExchangeRateServiceImpl(repo repositories.SubscriptionRepository) *ExchangeRateServiceImpl {
+func NewExchangeRateServiceImpl(
+	config config.Config,
+	repo repositories.SubscriptionRepository,
+) *ExchangeRateServiceImpl {
+	smtpAuth := smtp.PlainAuth(
+		"",
+		*config.GetEmailUsername(),
+		*config.GetEmailPassword(),
+		*config.GetSMTPHost(),
+	)
+
 	return &ExchangeRateServiceImpl{
-		repo: repo,
+		config:   config,
+		repo:     repo,
+		smtpAuth: smtpAuth,
 	}
 }
 
 func (s *ExchangeRateServiceImpl) GetExchangeRate(
 	request requests.GetRateRequest,
 ) (*responses.GetRateResponse, error) {
-	publicAPIResponse, err := http.Get(constants.ExchangeRateURL)
-	if err != nil {
-		return nil, err
-	}
-	defer publicAPIResponse.Body.Close()
-
-	body, err := ioutil.ReadAll(publicAPIResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var publicAPIData dto.PublicAPIRateResponse
-	err = json.Unmarshal(body, &publicAPIData)
+	publicAPIResponse, err := s.callExchangeRateAPI()
 	if err != nil {
 		return nil, err
 	}
 
 	return &responses.GetRateResponse{
-		Rate: publicAPIData.BTC.UAH,
+		Rate: publicAPIResponse.BTC.UAH,
 	}, nil
 }
 
@@ -71,5 +76,47 @@ func (s *ExchangeRateServiceImpl) Subscribe(
 func (s *ExchangeRateServiceImpl) SendEmails(
 	request requests.SendEmailsRequest,
 ) (*responses.SendEmailsResponse, error) {
-	return nil, nil
+	subscribers, err := s.repo.GetAllSubscriptions()
+	if err != nil {
+		return nil, NewInternalError()
+	}
+
+	exchangeRate, err := s.callExchangeRateAPI()
+	if err != nil {
+		return nil, err
+	}
+
+	err = smtp.SendMail(
+		fmt.Sprintf("%s:%s", *s.config.GetSMTPHost(), *s.config.GetSMTPPort()),
+		s.smtpAuth,
+		*s.config.GetEmailUsername(),
+		*subscribers.Contacts,
+		dto.NewEmailMessage(exchangeRate.BTC.UAH).GetMessage(),
+	)
+	if err != nil {
+		return nil, NewInternalError()
+	}
+
+	return responses.NewSendEmailsResponse(constants.StatusSuccess), nil
+}
+
+func (s *ExchangeRateServiceImpl) callExchangeRateAPI() (*dto.PublicAPIRateResponse, error) {
+	publicAPIResponse, err := http.Get(constants.ExchangeRateURL)
+	if err != nil {
+		return nil, NewInternalError()
+	}
+	defer publicAPIResponse.Body.Close()
+
+	body, err := ioutil.ReadAll(publicAPIResponse.Body)
+	if err != nil {
+		return nil, NewInternalError()
+	}
+
+	var publicAPIData dto.PublicAPIRateResponse
+	err = json.Unmarshal(body, &publicAPIData)
+	if err != nil {
+		return nil, NewInternalError()
+	}
+
+	return &publicAPIData, nil
 }
