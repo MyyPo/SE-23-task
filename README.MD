@@ -6,7 +6,7 @@
 - Uses simple fs db implementation that stores records in files by the record's first letter, records are separated by newlines
 - Uses free [Coingecko API](https://www.coingecko.com/en/api), according to the docs they have a limit of 10-30 requests/min, so it shoudn't throttle... theoretically
 - Uses [Gin](https://github.com/gin-gonic/gin)
-- I used mailtrap for testing it
+- I used [Mailtrap](https://mailtrap.io) for testing it
 
 ## How to start
 
